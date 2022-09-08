@@ -13,11 +13,14 @@ end procedure
 '''
 
 class Graph():
-    def __init__(self, nodes, distance, default_pheromone_level = 1000.):
+    def __init__(self, nodes, distance, default_pheromone_level = None):
         self.nodes = nodes
         self.distance = distance
         assert distance.shape[1] == distance.shape[0]
-        self.intensity = np.full_like(distance, default_pheromone_level).astype('float64')
+        if default_pheromone_level:
+            self.intensity = np.full_like(distance, default_pheromone_level).astype('float64')
+        else:
+            self.intensity = np.full_like(distance, self.distance.mean()*10).astype('float64')
         
 
     def __str__(self):
@@ -50,10 +53,20 @@ def cycle_length(g, cycle):
     length+= g.distance[cycle[i]][cycle[0]]
     return length
 
+def add_artificial_good_cycle(g):
+    size = g.distance.shape[0]
 
-def ant_colony_optimization(g, verbose=True, iterations = 100, ants_per_iteration = 50, q = 10, degradation_factor = .9, use_inertia = False):
+    for i in range(size-1):
+        g.distance[i][i+1]/=10
+    g.distance[size-1][0]/=10
+
+
+
+def ant_colony_optimization(g, verbose=True, iterations = 100, ants_per_iteration = 50, q = None, degradation_factor = .9, use_inertia = False, run_experiment_break=False, run_experiment_artificial_good_cycle=False):
     total_ants = 0
     
+    if q is None:
+        q = g.distance.mean()
 
     best_cycle = None #best_so_far #hardcoded instance. 
     best_length = float('inf') #cycle_length(g, best_so_far) #hardcoded instance. Else use inf
@@ -61,11 +74,32 @@ def ant_colony_optimization(g, verbose=True, iterations = 100, ants_per_iteratio
     old_best = None
     inertia = 0
     patience = 100
+    index = None
+    if run_experiment_break or run_experiment_artificial_good_cycle:
+        pheromone_history = []
 
     for iteration in range(iterations):
         print(f'iteration {iteration} \n' if (verbose and iteration%50==0) else '', end='')
         print(f'best weight so far: {round(best_length,2)}\n' if (verbose and iteration%50==0) else '', end='')
         print(f'average intensity {g.intensity.mean()}\n' if (verbose and iteration%50==0) else '', end='')
+
+        if iteration == 500:
+            if run_experiment_artificial_good_cycle:
+                add_artificial_good_cycle(g)
+            if run_experiment_break:
+                index = break_most_traversed_edge(g, 10)
+        if iteration >= 500:
+            if add_artificial_good_cycle:
+                levels = []
+                size = g.distance.shape[0]
+                for i in range(size-1):
+                    levels.append(g.intensity[i][i+1])
+                levels.append(g.intensity[size-1][0])
+                pheromone_history.append(levels)
+
+            if run_experiment_break:
+                pheromone_history.append(g.intensity[index])
+
 
         cycles = [traverse_graph(g, random.randint(0, g.nodes -1)) for _ in range(ants_per_iteration)]
 
@@ -106,6 +140,9 @@ def ant_colony_optimization(g, verbose=True, iterations = 100, ants_per_iteratio
                 print('applying shake')
                 g.intensity += g.intensity.mean()
         
+    if run_experiment_break or run_experiment_artificial_good_cycle:
+        with open('phero_history_exp2_10.txt','w') as f:
+            f.write(str(pheromone_history))
 
     return best_cycle
 
@@ -155,6 +192,13 @@ def traverse(g, cycle):
         i+=1
     print([cycle[i], cycle[0]])
     print(g.distance[cycle[i]][cycle[0]])
+
+def break_most_traversed_edge(g, constant):
+    index = g.intensity.argmax()
+    index = np.unravel_index(index, g.intensity.shape)
+    g.distance[index]*=constant
+    return index # for logging purposes
+
 
 
 
