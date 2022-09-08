@@ -55,8 +55,8 @@ def ant_colony_optimization(g, verbose=True, iterations = 100, ants_per_iteratio
     total_ants = 0
     
 
-    best_cycle = best_so_far
-    best_length = cycle_length(g, best_so_far) #hardcoded instance. Else use None
+    best_cycle = None #best_so_far #hardcoded instance. 
+    best_length = float('inf') #cycle_length(g, best_so_far) #hardcoded instance. Else use inf
 
     old_best = None
     inertia = 0
@@ -95,16 +95,16 @@ def ant_colony_optimization(g, verbose=True, iterations = 100, ants_per_iteratio
             g.intensity *= degradation_factor
         
         
-        '''if use_inertia and best_cycle:
+        if use_inertia and best_cycle:
                         
-                                    if old_best == best_length:
-                                            inertia+=1
-                                    else:
-                                        inertia = 0
-                        
-                                    if inertia > patience:
-                                        print('applying shake')
-                                        g.intensity += g.intensity.mean()'''
+            if old_best == best_length:
+                    inertia+=1
+            else:
+                inertia = 0
+
+            if inertia > patience:
+                print('applying shake')
+                g.intensity += g.intensity.mean()
         
 
     return best_cycle

@@ -25310,7 +25310,7 @@ build_graph = time.time()
 print(f'took {build_graph - start}s building graph' )
 
 print('iterations = 1000, q=1000')
-solution = ant_colony_optimization(bigger_graph, iterations = 2000, q=1000, use_inertia = True)
+solution = ant_colony_optimization(bigger_graph, iterations = 2000, q=1000, use_inertia = False)
 
 #solution = tsp(G, nodes=G.nodes)
 
