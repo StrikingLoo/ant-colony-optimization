@@ -125,7 +125,7 @@ def ant_colony_optimization(g, verbose=True, iterations = 100, ants_per_iteratio
             while i < len(cycle) -1:
                 g.intensity[cycle[i]][cycle[i+1]]+= delta
                 i+=1
-            g.intensity[cycle[i]][0] += delta
+            g.intensity[cycle[i]][cycle[0]] += delta
             g.intensity *= degradation_factor
         
         
